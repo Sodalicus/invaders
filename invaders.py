@@ -76,15 +76,17 @@ class Alien(games.Sprite):
 
     def fire(self):
         if self.projectile_timeout < 0:
-            new_projectile = Projectile(x=self.x, y=self.y+30, dy = 1,color=1)
+            new_projectile = Projectile(x=self.x, y=self.y+30, dy = 2,color=1)
             games.screen.add(new_projectile)
             self.projectile_timeout = Alien.TIMEOUT
 
     def die(self):
         self.destroy()
-        Alien.alien_count-=1
-        if Alien.alien_count == 0:
-            self.game.level_up()
+        self.game.score += 20
+        self.game.score_display.value = "Score: "+str(self.game.score)
+        self.game.score_display.right = WIDTH-30
+        if Alien.alien_count > 0: Alien.alien_count-=1
+        if Alien.alien_count == 0: self.game.level_up()
 
 
 
@@ -108,23 +110,27 @@ class Game(games.Sprite):
         background = games.load_image("media/background.bmp")
         games.screen.set_background(background)
         self.level = 0
-        self.level_up()
         self.score = 0
+        self.score_display = games.Text(value="Score: 0", size = 20, color=color.white, top = 10,\
+            right = WIDTH-30, is_collideable=False)
+        games.screen.add(self.score_display)
+        self.level_display = games.Text(value="Level: 0", size = 20, color=color.white, top = 10,\
+            left = 30, is_collideable=False)
+        games.screen.add(self.level_display)
 
     def level_up(self):
         self.level+=1
+        self.level_display.value = "Level: "+str(self.level)
+        self.level_display.left = 30
         for alien in range(self.level):
             direction = random.choice((-1,1))
-            altitude = random.choice((20, 50, 80))
+            altitude = random.choice((50, 80, 110, 140, 170))
             position = random.randrange(WIDTH)
             alien = Alien(x = position, y = altitude, dx = direction, game=self)
             games.screen.add(alien)
 
-    def displays(self):
-        pass
-
-
     def main(self):
+        self.level_up()
         games.screen.mainloop()
 
 game = Game()
