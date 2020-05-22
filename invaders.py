@@ -12,17 +12,26 @@ HEIGHT = 480
 games.init(screen_width = 640, screen_height = 480, fps = 50)
 
 class Ship(games.Sprite):
-    image = games.load_image("media/ship.bmp")
+    """Supposed to be a wrapper class for Player and Alien classes"""
     TIMEOUT = 40 
 
+
+class Player(Ship):
+    """Player's ship class, loads individual image, sets up alignment variables.
+    its methods update and fire handle keyboard ship control and projectiles
+    firing retrospectively. """
+    image = games.load_image("media/ship.bmp")
+
     def __init__(self):
-        super(Ship, self).__init__(image=Ship.image, y=HEIGHT-50, x=WIDTH/2)
-        self.projectiles = 0
-        self.projectile_timeout = 0
+        super(Player, self).__init__(image=Player.image, x=WIDTH/2, y=HEIGHT-50)
         self.deadly = False
         self.alien = False 
+        self.projectile_timeout = 0
+
     def update(self):
-        self.projectile_timeout -=1
+        """ Keys to movement assigment, game screen edges detection
+        and collision with alien projectiles handling"""
+        if self.projectile_timeout > 0: self.projectile_timeout -=1
         if games.keyboard.is_pressed(games.K_RIGHT): self.x+=2
         if games.keyboard.is_pressed(games.K_LEFT): self.x-=2
         if self.left < 0: self.left = 0
@@ -33,34 +42,42 @@ class Ship(games.Sprite):
             for sprite in self.overlapping_sprites:
                 if sprite.deadly == True and sprite.alien == True:
                     sprite.destroy()
-                    self.destroy()
-
-
+                    self.die()
 
 
 
     def fire(self):
-        if self.projectile_timeout < 0:
+        """Fire projectile from player's ship"""
+        if self.projectile_timeout == 0:
             new_projectile = Projectile(x=self.x, y=self.y-20, dy = -4)
             games.screen.add(new_projectile)
             self.projectile_timeout = Ship.TIMEOUT
 
+    def die(self):
+        """ Destroy player's ship, display game over message and quit"""
+        self.destroy()
+        game_over = games.Message(value="GAME OVER", size=60, color=color.red,\
+                x=WIDTH/2, y=HEIGHT/2, lifetime=180, \
+                after_death=games.screen.quit)
+        games.screen.add(game_over)
 
 
-class Alien(games.Sprite):
-    image = games.load_image("media/alien.bmp")
-    TIMEOUT = 120 
+
+class Alien(Ship):
+    """Enemy`s class, loads enemy image, controls it`s movement and attacks""" 
+    image = games.load_image("media/satelite.bmp")
     alien_count = 0
     def __init__(self, x, y, dx, game):
         super(Alien, self).__init__(image = Alien.image, x=x, y=y, dx=dx)
-        self.projectile_timeout = 0
+        self.projectile_timeout = random.randrange(200) 
         self.deadly = False
         self.alien = True
         Alien.alien_count+=1
         self.game = game
 
     def update(self):
-        self.projectile_timeout -=1
+        self.angle +=1
+        if self.projectile_timeout > 0: self.projectile_timeout -=1
         self.fire()
         if self.right > WIDTH:
             self.right = WIDTH
@@ -75,10 +92,10 @@ class Alien(games.Sprite):
                     self.die()
 
     def fire(self):
-        if self.projectile_timeout < 0:
+        if self.projectile_timeout == 0:
             new_projectile = Projectile(x=self.x, y=self.y+30, dy = 2,color=1)
             games.screen.add(new_projectile)
-            self.projectile_timeout = Alien.TIMEOUT
+            self.projectile_timeout = random.randrange(200) 
 
     def die(self):
         self.destroy()
@@ -105,7 +122,7 @@ class Projectile(games.Sprite):
 
 class Game(games.Sprite):
     def __init__(self):
-        self.ship = Ship()
+        self.ship = Player()
         games.screen.add(self.ship)
         background = games.load_image("media/background.bmp")
         games.screen.set_background(background)
